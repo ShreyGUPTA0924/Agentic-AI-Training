@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Agentic AI Agent — Learning Repository
 
 This repository is the central platform for all work completed during the **Agentic AI** training program. All assignments are issued via **GitHub Issues**, developed on dedicated **feature branches**, and merged through **Pull Requests** — mirroring real-world, industry-standard Git workflows.
@@ -89,3 +90,7 @@ All contributions follow the **GitHub Flow**:
 - Keep commits atomic and well-described.
 - Open a PR, request a review, and address feedback before merging.
 - Never push directly to `main`.
+=======
+# Agentic-AI-Training
+Building an Agentic AI Agent 
+>>>>>>> e4159c5f92837b51553ade6d6b37870cfb08d0e4
