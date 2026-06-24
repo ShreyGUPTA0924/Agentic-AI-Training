@@ -1,0 +1,11 @@
+The Transformer Architecture: Overview and Key Components
+
+The Transformer is a deep learning model architecture introduced in 2017 by Vaswani et al. in the landmark paper "Attention Is All You Need." It has since become the foundational architecture behind modern Large Language Models (LLMs) such as GPT-4, Claude, and LLaMA, completely replacing recurrent neural networks (RNNs) and long short-term memory (LSTM) networks in natural language processing (NLP).
+
+At the core of the Transformer is the self-attention mechanism. Unlike sequential models that process tokens one by one, the Transformer processes all tokens in a sequence simultaneously. The self-attention mechanism computes a representation of each token by attending to all other tokens in the sequence, allowing the model to capture long-range dependencies and contextual relationships regardless of their distance in the text. This calculation relies on three matrices: Queries (Q), Keys (K), and Values (V). The attention score is calculated as Attention(Q, K, V) = softmax(Q K^T / sqrt(d_k)) V, where d_k is the dimension of the keys.
+
+To allow the model to attend to information from different representation subspaces simultaneously, the Transformer uses Multi-Head Attention. This divides the Queries, Keys, and Values into multiple heads, performs the attention operation on each head in parallel, and then concatenates and projects the outputs.
+
+Standard Transformer models consist of an Encoder and a Decoder stack. The Encoder maps an input sequence of symbol representations to a sequence of continuous representations. The Decoder then generates an output sequence of symbols one token at a time, using both its own previous outputs and the encoder's representations via encoder-decoder cross-attention.
+
+Because the Transformer has no recurrence or convolution, it has no inherent sense of token order. To address this, Positional Encodings are added to the input embeddings. These encodings use sinusoidal functions of different frequencies to inject information about the relative or absolute position of the tokens in the sequence. Each encoder and decoder layer also includes a position-wise Feed-Forward Network (FFN), layer normalization, and residual connections to stabilize training.
