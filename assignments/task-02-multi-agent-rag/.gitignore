@@ -1,0 +1,6 @@
+# Local gitignore for Task 02
+.env
+data/chroma_db/
+__pycache__/
+*.pyc
+.venv/
