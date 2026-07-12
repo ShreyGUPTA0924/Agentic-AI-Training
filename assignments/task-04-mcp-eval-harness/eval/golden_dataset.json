@@ -1,0 +1,149 @@
+[
+  {
+    "id": "q01",
+    "question": "Who introduced the Transformer architecture and in what paper?",
+    "expected_facts": [
+      "Vaswani",
+      "2017",
+      "Attention Is All You Need"
+    ],
+    "source_doc": "sample_ai.txt"
+  },
+  {
+    "id": "q02",
+    "question": "What is the self-attention mechanism in Transformers and what three matrices does it use?",
+    "expected_facts": [
+      "self-attention",
+      "Queries",
+      "Keys",
+      "Values",
+      "softmax"
+    ],
+    "source_doc": "sample_ai.txt"
+  },
+  {
+    "id": "q03",
+    "question": "Why are positional encodings added to the inputs of the Transformer model?",
+    "expected_facts": [
+      "no recurrence",
+      "no convolution",
+      "token order",
+      "sinusoidal functions"
+    ],
+    "source_doc": "sample_ai.txt"
+  },
+  {
+    "id": "q04",
+    "question": "What does RLHF stand for and what are its three stages?",
+    "expected_facts": [
+      "Reinforcement Learning from Human Feedback",
+      "Supervised Fine-Tuning",
+      "SFT",
+      "Reward Model Training",
+      "Reinforcement Learning Fine-Tuning",
+      "PPO"
+    ],
+    "source_doc": "sample_ml.txt"
+  },
+  {
+    "id": "q05",
+    "question": "What is DPO and how does it compare to PPO in RLHF?",
+    "expected_facts": [
+      "Direct Preference Optimization",
+      "bypasses training an explicit reward model",
+      "closed-form loss function"
+    ],
+    "source_doc": "sample_ml.txt"
+  },
+  {
+    "id": "q06",
+    "question": "Why is a Kullback-Leibler (KL) divergence penalty added to the reward function in RLHF?",
+    "expected_facts": [
+      "prevent the model from drifting too far",
+      "exploit the reward model",
+      "reward hacking"
+    ],
+    "source_doc": "sample_ml.txt"
+  },
+  {
+    "id": "q07",
+    "question": "What are vector databases designed for and what algorithms do they use for search?",
+    "expected_facts": [
+      "high-dimensional vector embeddings",
+      "Approximate Nearest Neighbor",
+      "ANN",
+      "HNSW",
+      "IVF",
+      "LSH"
+    ],
+    "source_doc": "vector_databases.md"
+  },
+  {
+    "id": "q08",
+    "question": "How does a vector database retrieve relevant document chunks when a user queries it?",
+    "expected_facts": [
+      "query is converted into a vector embedding",
+      "similarity search",
+      "Cosine Similarity",
+      "top-k document vectors"
+    ],
+    "source_doc": "vector_databases.md"
+  },
+  {
+    "id": "q09",
+    "question": "What is ChromaDB and how can developers choose to run it?",
+    "expected_facts": [
+      "open-source",
+      "vector database",
+      "in-memory",
+      "persist it to a local directory",
+      "client-server"
+    ],
+    "source_doc": "vector_databases.md"
+  },
+  {
+    "id": "q10",
+    "question": "What is the purpose of the Send API in LangGraph?",
+    "expected_facts": [
+      "parallel operations",
+      "dynamic parallel execution",
+      "dynamic fan-out",
+      "map-reduce",
+      "Send objects"
+    ],
+    "source_doc": "langgraph_send_api.md"
+  },
+  {
+    "id": "q11",
+    "question": "How does LangGraph manage state convergence when parallel branches complete?",
+    "expected_facts": [
+      "reducers",
+      "Annotated",
+      "combine outputs",
+      "without conflicts or overwrites"
+    ],
+    "source_doc": "langgraph_send_api.md"
+  },
+  {
+    "id": "q12",
+    "question": "Explain the Chain-of-Thought (CoT) and Few-Shot prompting techniques.",
+    "expected_facts": [
+      "step-by-step reasoning",
+      "scratchpad",
+      "Few-Shot",
+      "example inputs and their corresponding target outputs"
+    ],
+    "source_doc": "prompt_engineering.md"
+  },
+  {
+    "id": "q13",
+    "question": "How is negative feedback handled in production prompt design for self-reflection?",
+    "expected_facts": [
+      "evaluator agent",
+      "faithfulness score",
+      "negative feedback is fed back",
+      "revise the response"
+    ],
+    "source_doc": "prompt_engineering.md"
+  }
+]
