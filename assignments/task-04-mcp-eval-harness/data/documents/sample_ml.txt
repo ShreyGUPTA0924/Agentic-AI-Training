@@ -1,0 +1,13 @@
+Reinforcement Learning from Human Feedback (RLHF)
+
+Reinforcement Learning from Human Feedback (RLHF) is a powerful machine learning technique used to align large language models with human preferences, values, and safety standards. While raw language models are trained on internet-scale text to predict the next token, they can generate toxic, untruthful, or unhelpful content. RLHF bridges the gap between next-token prediction and human utility.
+
+The RLHF process typically consists of three sequential phases:
+
+1. Supervised Fine-Tuning (SFT): The base pretrained language model is fine-tuned on a high-quality, curated dataset of prompt-response pairs written by human annotators. This teaches the model the basic format of a helpful assistant.
+
+2. Reward Model Training: Prompts are fed to the SFT model to generate multiple candidate completions. Human evaluators rank these completions based on criteria like helpfulness, accuracy, and safety. A separate reward model (often a modified version of the SFT model) is trained on this pair-wise ranking dataset using a loss function that maximizes the score of preferred completions relative to rejected ones. The reward model learns to output a scalar score representing the quality of a given response.
+
+3. Reinforcement Learning Fine-Tuning: The SFT model is further fine-tuned using reinforcement learning, typically with the Proximal Policy Optimization (PPO) algorithm. The language model acts as the policy, the prompt is the state, and the generated token sequence is the action. The reward model scores the generation, providing feedback. A Kullback-Leibler (KL) divergence penalty is added to the reward function to prevent the model from drifting too far from the initial SFT model and exploit the reward model (reward hacking).
+
+An alternative to PPO is Direct Preference Optimization (DPO), which bypasses training an explicit reward model and instead directly optimizes the policy on human preference pairs using a closed-form loss function.
