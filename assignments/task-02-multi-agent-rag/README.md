@@ -1,206 +1,176 @@
-# Multi-Agent RAG System with Human-in-the-Loop using LangGraph
+# Multi-Agent RAG — Human-in-the-Loop
 
-This repository contains the implementation of **Assignment Task 02: Multi-Agent RAG System with Human-in-the-Loop (HiTL)** using LangGraph.
+A compact, production-oriented implementation of a Retrieval-Augmented Generation (RAG) pipeline driven by a team of cooperating agents (Supervisor, Researcher, Writer) with an optional human review step. This project demonstrates a pragmatic architecture for grounding LLM outputs in local document embeddings and coordinating agent behavior using LangGraph.
 
-The system uses a multi-agent team (Supervisor, Researcher, and Writer) to answer user questions about technical documents using local vector search (ChromaDB) with HuggingFace embeddings. It employs a Human-in-the-Loop mechanism that pauses execution after RAG retrieval, presents the chunks for inspection, and prompts the user to approve, reject, or rewrite the search query.
+Highlights
+- Multi-agent orchestration (Supervisor, Researcher, Writer) that routes work and shares a typed PipelineState.
+- Local vector store (ChromaDB) with deterministic, idempotent ingestion of document chunks.
+- Human-in-the-loop review node that lets an operator inspect retrieved context and approve, reject, or refine the query.
+- Query rewriting to improve semantic search quality and optional re-ranking hooks.
 
----
+Table of contents
+- Features
+- Architecture
+- Quickstart
+- Configuration
+- Document ingestion (RAG setup)
+- Running the CLI
+- Human approval workflow
+- Folder structure
+- Example session
+- Future improvements
+- License
 
-## 🎯 Architecture Diagram
+## Features
+- Idempotent document ingestion into ChromaDB using HuggingFace sentence-transformers embeddings.
+- Supervisor/Worker-style orchestration that keeps nodes small, testable, and composable.
+- Query rewriter node to expand and normalize user queries for better recall.
+- Simple console-friendly UI designed for Windows PowerShell / Command Prompt.
 
-Below is the workflow topology of the Multi-Agent system:
+## Architecture
+
+The project uses a small agent team to process a user query, retrieve supporting documents, optionally pause for a human review, and then synthesize a final, cited answer.
 
 ```mermaid
 graph TD
-    START([START]) --> SV[Supervisor Node]
-    SV -->|next_agent = researcher| QR[Query Rewriter Node]
-    SV -->|next_agent = writer| WR[Writer Node]
-    SV -->|next_agent = end| END([END])
-    
-    QR --> RE[Researcher Node]
-    RE --> HR_Pause{{"human_review_node (Pauses via interrupt_before)"}}
-    
-    HR_Pause -->|Resumes with None| HR[human_review_node (Dynamic interrupt)]
-    HR -->|y / yes (approved = True)| WR
-    HR -->|n / no (approved = False)| SV
-    HR -->|r <new query> (rewrites query)| QR
-    
+    START([User Query]) --> SV[Supervisor]
+    SV -->|next_agent=researcher| QR[Query Rewriter]
+    SV -->|next_agent=writer| WR[Writer]
+    SV -->|next_agent=end| END([Done])
+
+    QR --> RE[Researcher]
+    RE --> HR_Pause{{Human Review (interrupt)}}
+
+    HR_Pause --> HR[Human Review Node]
+    HR -->|approve| WR
+    HR -->|reject| SV
+    HR -->|refine query| QR
+
     WR --> SV
 ```
 
----
+## Quickstart
 
-## 📂 Folder Structure
+Prerequisites
+- Python 3.10+ recommended
+- Git
 
-```
-assignments/task-02-multi-agent-rag/
-├── README.md                      # Detailed notes on setup, execution, and concepts
-├── requirements.txt               # Project python dependencies
-├── .env                           # Local environment keys (kept private)
-├── .env.example                   # Shared template for environment variables
-│
-├── data/
-│   ├── chroma_db/                 # Persisted local Chroma vector store
-│   └── documents/                 # Raw context source text documents
-│       ├── sample_ai.txt          # Transformer architecture source document
-│       └── sample_ml.txt          # RLHF source document
-│
-├── agents/
-│   ├── __init__.py
-│   ├── supervisor.py              # Routes execution using Pydantic structured output
-│   ├── query_rewriter.py          # Bonus: Rewrites search query using Groq LLM
-│   ├── researcher.py              # Coordinates Chroma similarity searches
-│   └── writer.py                  # Synthesizes final cited technical answers
-│
-├── rag/
-│   ├── __init__.py
-│   ├── ingest.py                  # Idempotent segmenting, embedding, indexing script
-│   └── retriever.py               # Chroma database similarity search wrapper
-│
-├── state.py                       # Shared TypedDict PipelineState
-├── graph.py                       # LangGraph compilation & routing logic
-└── main.py                        # Interactive CLI harness
+1. Clone the repository
+
+```bash
+git clone https://github.com/ShreyGUPTA0924/Agentic-AI-Training.git
+cd Agentic-AI-Training/assignments/task-02-multi-agent-rag
 ```
 
----
+2. Create and activate a virtual environment
 
-## 🛠️ Installation & Setup
+```bash
+python -m venv .venv
+# macOS / Linux
+source .venv/bin/activate
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
+```
 
-1. **Activate Virtual Environment**:
-   Ensure you use the existing environment inside `.venv/`.
-   ```powershell
-   .venv\Scripts\activate
-   ```
+3. Install dependencies
 
-2. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-3. **Configure Environment Variables**:
-   Copy `.env.example` to `.env` and fill in your Groq API Key:
-   ```env
-   GROQ_API_KEY=gsk_yioQSqrFGO...
-   ```
+## Configuration
 
----
+Copy the environment template and provide any API keys required by your configuration:
 
-## 📖 Document Ingestion (RAG Setup)
+```bash
+cp .env.example .env
+# then edit .env and add your API key(s)
+```
 
-Run the ingestion script to load files from `data/documents/` into the ChromaDB vector database.
-The ingestion is fully **idempotent**; running it multiple times will not duplicate embeddings. It automatically computes unique, deterministic chunk IDs based on the document source name and chunk index.
+The project expects a GROQ-style key variable (used by the optional query-rewriter LLM integration). If you do not use that component, you can leave the key empty and the core RAG flow will still operate using local sentence-transformer embeddings.
+
+## Document ingestion (RAG setup)
+
+Ingest your source documents into the local ChromaDB vector store. The ingestion script is idempotent and uses deterministic chunk IDs to avoid duplication.
 
 ```bash
 python rag/ingest.py
 ```
 
----
+This will process files under `data/documents/` and write vector data to `data/chroma_db/`.
 
-## 🚀 Running the Project
+## Running the CLI
 
-Launch the main CLI runner:
+Start the interactive CLI to ask questions against your local document collection:
+
 ```bash
 python main.py
 ```
 
----
+The system will orchestrate agents to rewrite the query (if enabled), retrieve top-k chunks from ChromaDB, pause for a human review (if configured), and then synthesize a final answer with citations.
 
-## 🤝 Human Approval Workflow
+## Human approval workflow
 
-When you ask a question, the graph executes up to the **Human Review Node** and pauses:
-1. It displays all the chunks retrieved from the Chroma database.
-2. It prompts you with three options:
-   * **`y` / `yes`**: Approves the context. The graph moves forward to the **Writer Agent** to generate the final cited answer.
-   * **`n` / `no`**: Rejects the context. The graph goes back to the **Supervisor** which can decide to research again or exit.
-   * **`r <new query>`**: Overrides the query. The graph clears existing retrieved documents, updates the query to `<new query>`, and runs the researcher again to fetch better results.
+When the human review node is reached the CLI will display the retrieved chunks and prompt the operator with three options:
+- `y` / `yes` — Approve the retrieved context and proceed to the Writer to generate the final answer.
+- `n` / `no` — Reject the retrieved context. The Supervisor will determine whether to rerun the researcher or exit.
+- `r <new query>` — Replace the query with `<new query>` and run retrieval again.
 
----
+This simple interrupt-based pattern makes it easy to inspect and control the grounding sources before the model generates a response.
 
-## 💡 Multi-Agent & RAG Explanation
-
-### 1. The Supervisor/Worker Pattern
-This architecture is modeled after human organizations. The **Supervisor** acts as the project manager, observing the shared state (`PipelineState`) and routing execution using Pydantic structured output. The Workers (**Researcher** and **Writer**) are experts in their own narrow domains (retrieval and generation, respectively). By decoupling retrieval from generation, we can include checks (like human feedback) in between and ensure LLM boundaries are respected.
-
-### 2. Retrieval-Augmented Generation (RAG)
-Large Language Models have static knowledge cutoff dates and are prone to hallucinations. RAG fixes this by searching external databases for context relevant to the user query and supplying that context directly to the LLM's prompt. 
-* **Embeddings**: Text chunks are converted into 384-dimensional dense vectors using a local `sentence-transformers/all-MiniLM-L6-v2` model.
-* **Vector Search**: ChromaDB compares the query vector against chunk vectors using cosine similarity to return the top `k=4` most relevant segments.
-
----
-
-## 🌟 Bonus Features Implemented
-
-* **Query Rewriter Node**: Before documents are retrieved, the system passes the user query through a query-rewriting LLM node. This expands terms, formats the query for semantic search, and significantly increases vector search recall.
-* **ASCII Console Compatibility**: All UI outputs have been tailored for Windows Command Prompt/PowerShell consoles to prevent `UnicodeEncodeError` crashes.
-
----
-
-## 📝 Example Session Output
+## Folder structure
 
 ```
-============================================================
-      MULTI-AGENT RAG PIPELINE WITH HUMAN-IN-THE-LOOP      
-============================================================
+assignments/task-02-multi-agent-rag/
+├── README.md                    # This file
+├── requirements.txt             # Python dependencies
+├── .env.example                 # Template for environment variables
+├── data/
+│   ├── chroma_db/               # Persisted local Chroma vector store
+│   └── documents/               # Source documents to index
+│       ├── sample_ai.txt
+│       └── sample_ml.txt
+├── agents/
+│   ├── supervisor.py            # Routing logic and Supervisor agent
+│   ├── query_rewriter.py        # Optional LLM-based query rewriter
+│   ├── researcher.py            # Issues similarity searches to ChromaDB
+│   └── writer.py                # Synthesizes final, cited answers
+├── rag/
+│   ├── ingest.py                # Idempotent chunking + indexing script
+│   └── retriever.py             # Chroma similarity search wrapper
+├── state.py                     # Shared PipelineState typing
+├── graph.py                     # LangGraph compilation and routing
+└── main.py                      # Interactive CLI entry point
+```
 
-Ask a question (e.g. about Transformer architecture or RLHF):
+## Example session (abridged)
+
+```
+MULTI-AGENT RAG PIPELINE — HUMAN-IN-THE-LOOP
+
 > Tell me about RLHF and reward models.
 
-[System] Starting Multi-Agent workflow...
-2026-06-24 20:37:06,249 | INFO | Researcher retrieved 4 document chunks.
-2026-06-24 20:37:06,263 | INFO | Graph paused before human_review_node. Resuming to run node...
-2026-06-24 20:37:06,264 | INFO | Human Review Node entered. Pausing for human feedback...
-
-============================================================
-                 HUMAN CONTEXT REVIEW                 
-============================================================
-Current Query: 'What are the key concepts and applications of Reinforcement Learning from Human Feedback (RLHF) and how do reward models play a role in this process?'
-
-Retrieved Chunks (4):
-
-[Doc 1]:
-Reinforcement Learning from Human Feedback (RLHF)
-Reinforcement Learning from Human Feedback (RLHF) is a powerful machine learning technique used to align large language models with human preferences, values, and safety standards...
-
-[Doc 2]:
-rejected ones. The reward model learns to output a scalar score representing the quality of a given response.
-
-[Doc 3]:
-3. Reinforcement Learning Fine-Tuning: The SFT model is further fine-tuned using reinforcement learning, typically with the Proximal Policy Optimization (PPO) algorithm. The language model acts as the policy, the prompt is the state, and the generated token sequence is the action...
-
-[Doc 4]:
-2. Reward Model Training: Prompts are fed to the SFT model to generate multiple candidate completions. Human evaluators rank these completions based on criteria like helpfulness, accuracy, and safety. A separate reward model (often a modified version of the SFT model) is trained...
-============================================================
+[Researcher] Retrieved 4 document chunks.
+[HumanReview] Paused for human verification of retrieved context.
 
 Options:
-  y / yes : Approve context and proceed to Writer
-  n / no  : Reject context and return to Supervisor
-  r <query>: Refine search with a new custom query
+- y / yes  : Approve and proceed to Writer
+- n / no   : Reject and return to Supervisor
+- r <query>: Refine the query and search again
 
-Your choice: y
+> y
 
-[System] Resuming workflow with user feedback...
+[Writer] Generating final answer (with citations)...
 
-============================================================
-                     FINAL ANSWER                      
-============================================================
-Reinforcement Learning from Human Feedback (RLHF) is a machine learning technique used to align large language models with human preferences, values, and safety standards [Doc 1]. The key concepts of RLHF involve bridging the gap between next-token prediction and human utility, allowing language models to generate content that is more aligned with human values.
-
-One of the key applications of RLHF is to prevent the generation of toxic, untruthful, or unhelpful content. This is achieved by using a reward model that learns to output a scalar score representing the quality of a given response [Doc 2, Doc 4]. The reward model is trained on a pair-wise ranking dataset, where human evaluators rank candidate completions based on criteria like helpfulness, accuracy, and safety.
-
-In the RLHF process, the reward model plays a crucial role in providing feedback to the language model. The language model acts as the policy, the prompt is the state, and the generated token sequence is the action [Doc 3]. The reward model scores the generation, providing feedback that helps the language model to improve its performance.
-
-The reward model is typically trained using a loss function that maximizes the score of preferred completions relative to rejected ones [Doc 4]. This allows the reward model to learn the preferences and values of human evaluators and provide more accurate feedback to the language model.
-
-Overall, the key concepts and applications of RLHF involve using a reward model to provide feedback to a language model, allowing it to generate content that is more aligned with human values and preferences.
-============================================================
-
-[System] Session ended. Goodbye!
+Reinforcement Learning from Human Feedback (RLHF) is a technique used to align large language models with human preferences. The reward model scores candidate outputs based on human judgments, and the policy is fine-tuned using reinforcement learning (e.g. PPO) to maximize expected reward. [Doc 1] [Doc 4]
 ```
 
----
+## Future improvements
+- Add a re-ranking node (cross-encoder/reranker) to select the most faithful chunks before synthesis.
+- Add an evaluation node to measure faithfulness and factual grounding of generated answers.
+- Provide a management CLI for clearing and versioning local vector collections.
+- Expand automated tests for the LangGraph routing logic and human-review behaviors.
 
-## 🔮 Future Improvements
+## License
 
-1. **Re-Ranking Node**: Integrate a Cohere reranker or Cross-Encoder model to score retrieved chunks and pass only the top 2-3 highest-scoring chunks to the Writer to save context space.
-2. **Evaluation Node**: Add a final node to evaluate the Writer's response for faithfulness (grounding in context) and relevance before printing the final answer.
-3. **Database Clearing Script**: Implement a utility command to wipe local database collections when updating source documents.
+MIT — see the LICENSE file at the repository root for details.
