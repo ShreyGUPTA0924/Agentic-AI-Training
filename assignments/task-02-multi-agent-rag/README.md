@@ -1,6 +1,6 @@
 # Multi-Agent RAG — Human-in-the-Loop
 
-A compact, production-oriented implementation of a Retrieval-Augmented Generation (RAG) pipeline driven by a team of cooperating agents (Supervisor, Researcher, Writer) with an optional human review step. This project demonstrates a pragmatic architecture for grounding LLM outputs in local document embeddings and coordinating agent behavior using LangGraph.
+A compact, production-oriented implementation of a Retrieval-Augmented Generation (RAG) pipeline driven by a team of cooperating agents (Supervisor, Researcher, Writer) with an optional human review node for validation and query refinement.
 
 Highlights
 - Multi-agent orchestration (Supervisor, Researcher, Writer) that routes work and shares a typed PipelineState.
@@ -39,12 +39,12 @@ graph TD
     SV -->|next_agent=end| END([Done])
 
     QR --> RE[Researcher]
-    RE --> HR_Pause{{Human Review (interrupt)}}
+    RE --> HR_Pause{Human Review (interrupt)}
 
     HR_Pause --> HR[Human Review Node]
-    HR -->|approve| WR
-    HR -->|reject| SV
-    HR -->|refine query| QR
+    HR_Pause -->|approve| WR
+    HR_Pause -->|reject| SV
+    HR_Pause -->|refine query| QR
 
     WR --> SV
 ```
@@ -87,7 +87,7 @@ cp .env.example .env
 # then edit .env and add your API key(s)
 ```
 
-The project expects a GROQ-style key variable (used by the optional query-rewriter LLM integration). If you do not use that component, you can leave the key empty and the core RAG flow will still operate using local sentence-transformer embeddings.
+The project expects a GROQ-style key variable (used by the optional query-rewriter LLM integration). If you do not use that component, you can leave the key empty and the core RAG flow will still function.
 
 ## Document ingestion (RAG setup)
 
@@ -162,7 +162,7 @@ Options:
 
 [Writer] Generating final answer (with citations)...
 
-Reinforcement Learning from Human Feedback (RLHF) is a technique used to align large language models with human preferences. The reward model scores candidate outputs based on human judgments, and the policy is fine-tuned using reinforcement learning (e.g. PPO) to maximize expected reward. [Doc 1] [Doc 4]
+Reinforcement Learning from Human Feedback (RLHF) is a technique used to align large language models with human preferences. The reward model scores candidate outputs based on human judgments, and the policy is updated accordingly.
 ```
 
 ## Future improvements
