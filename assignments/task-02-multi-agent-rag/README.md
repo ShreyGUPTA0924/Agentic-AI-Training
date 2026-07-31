@@ -34,14 +34,13 @@ The project uses a small agent team to process a user query, retrieve supporting
 ```mermaid
 graph TD
     START([User Query]) --> SV[Supervisor]
-    SV -->|next_agent=researcher| QR[Query Rewriter]
-    SV -->|next_agent=writer| WR[Writer]
-    SV -->|next_agent=end| END([Done])
+    SV -->|researcher| QR[Query Rewriter]
+    SV -->|writer| WR[Writer]
+    SV -->|end| END([Done])
 
     QR --> RE[Researcher]
-    RE --> HR_Pause{Human Review (interrupt)}
+    RE --> HR_Pause{Human Review?}
 
-    HR_Pause --> HR[Human Review Node]
     HR_Pause -->|approve| WR
     HR_Pause -->|reject| SV
     HR_Pause -->|refine query| QR
